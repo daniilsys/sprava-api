@@ -7,6 +7,7 @@ import { AppError } from "../utils/errors.js";
 import * as uploadService from "../services/upload.service.js";
 import * as conversationService from "../services/conversation.service.js";
 import { prisma } from "../config/db.js";
+import { NotFoundError } from "../utils/errors.js";
 import { toSelfUser } from "../mappers/user.mapper.js";
 import { generateSnowflake } from "@/utils/snowflake.js";
 import { toAttachment } from "../mappers/attachment.mapper.js";
@@ -25,14 +26,16 @@ router.put(
   "/avatar",
   uploadImage.single("file"),
   async (req: Request, res: Response) => {
-    const file = requireFile(req);
-    const url = await uploadService.uploadFile("avatars", file);
-
     const current = await prisma.user.findUnique({
       where: { id: req.userId! },
       select: { avatarUrl: true },
     });
-    if (current?.avatarUrl) {
+    if (!current) throw new NotFoundError("Utilisateur introuvable");
+
+    const file = requireFile(req);
+    const url = await uploadService.uploadFile("avatars", file);
+
+    if (current.avatarUrl) {
       await uploadService.deleteFile(current.avatarUrl);
     }
 
@@ -58,14 +61,26 @@ router.put(
     const conversationId = req.params.id as string;
     await conversationService.assertMember(req.userId!, conversationId);
 
+    const current = await prisma.conversation.findUnique({
+      where: { id: conversationId },
+      select: { iconUrl: true, isGroup: true, ownerId: true },
+    });
+    if (!current) throw new NotFoundError("Conversation introuvable");
+    if (!current.isGroup)
+      throw new AppError(
+        400,
+        "Seules les conversations de groupe peuvent avoir une icône",
+      );
+    if (current.ownerId !== req.userId)
+      throw new AppError(
+        403,
+        "Seul le propriétaire du groupe peut changer l'icône",
+      );
+
     const file = requireFile(req);
     const url = await uploadService.uploadFile("icons", file);
 
-    const current = await prisma.conversation.findUnique({
-      where: { id: conversationId },
-      select: { iconUrl: true },
-    });
-    if (current?.iconUrl) {
+    if (current.iconUrl) {
       await uploadService.deleteFile(current.iconUrl);
     }
 
