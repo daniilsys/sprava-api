@@ -1,0 +1,161 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id 
+  username  String   @unique
+  email     String   @unique
+  password  String
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages             Message[]
+  conversations        ConversationMember[]
+  refreshTokens        RefreshToken[]
+  attachments          Attachment[]
+  sentFriendRequests   FriendRequest[]      @relation("FriendRequestSender")
+  receivedFriendRequests FriendRequest[]    @relation("FriendRequestReceiver")
+  blockedUsers         Block[]              @relation("Blocker")
+  blockedByUsers       Block[]              @relation("Blocked")
+  reactions            Reaction[]
+  readStates           ReadState[]
+  ownedConversations   Conversation[]       @relation("ConversationOwner")
+}
+
+model Conversation {
+  id        String   @id
+  name      String?
+  iconUrl   String?
+  isGroup   Boolean  @default(false)
+  ownerId   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner      User?                @relation("ConversationOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  members    ConversationMember[]
+  messages   Message[]
+  readStates ReadState[]
+}
+
+model ConversationMember {
+  userId         String
+  conversationId String
+  joinedAt       DateTime @default(now())
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@id([userId, conversationId])
+}
+
+model Message {
+  id             String    @id
+  content        String
+  conversationId String
+  senderId       String
+  replyToId      String?
+  deletedAt      DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  replyTo      Message?     @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies      Message[]    @relation("MessageReplies")
+  attachments  Attachment[]
+  reactions    Reaction[]
+  readStates   ReadState[]
+
+  @@index([conversationId, createdAt])
+}
+
+model ReadState {
+  userId         String
+  conversationId String
+  lastMessageId  String
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  lastMessage  Message      @relation(fields: [lastMessageId], references: [id], onDelete: Cascade)
+
+  @@id([userId, conversationId])
+}
+
+model Reaction {
+  userId    String
+  messageId String
+  emoji     String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@id([userId, messageId, emoji])
+  @@index([messageId])
+}
+
+model Attachment {
+  id         String   @id
+  url        String
+  filename   String
+  mimeType   String
+  size       Int
+  messageId  String?
+  uploaderId String
+  createdAt  DateTime @default(now())
+
+  message Message? @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  uploader User    @relation(fields: [uploaderId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+  @@index([uploaderId])
+}
+
+enum FriendRequestStatus {
+  PENDING
+  ACCEPTED
+}
+
+model FriendRequest {
+  id         String              @id
+  senderId   String
+  receiverId String
+  status     FriendRequestStatus @default(PENDING)
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+
+  sender   User @relation("FriendRequestSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("FriendRequestReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@unique([senderId, receiverId])
+  @@index([receiverId])
+}
+
+model Block {
+  blockerId String
+  blockedId String
+  createdAt DateTime @default(now())
+
+  blocker User @relation("Blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked User @relation("Blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@id([blockerId, blockedId])
+}
+
+model RefreshToken {
+  id        String   @id
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
