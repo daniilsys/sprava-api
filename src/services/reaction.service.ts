@@ -15,11 +15,11 @@ function getMessageWithConversation(messageId: string) {
 
 export async function addReaction(userId: string, messageId: string, emoji: string) {
   if (!EMOJI_REGEX.test(emoji)) {
-    throw new AppError(400, "Emoji invalide");
+    throw new AppError(400, "Invalid emoji");
   }
 
   const message = await getMessageWithConversation(messageId);
-  if (!message) throw new NotFoundError("Message introuvable");
+  if (!message) throw new NotFoundError("Message not found");
 
   await assertMember(userId, message.conversationId);
 
@@ -37,14 +37,14 @@ export async function addReaction(userId: string, messageId: string, emoji: stri
 
 export async function removeReaction(userId: string, messageId: string, emoji: string) {
   const message = await getMessageWithConversation(messageId);
-  if (!message) throw new NotFoundError("Message introuvable");
+  if (!message) throw new NotFoundError("Message not found");
 
   await assertMember(userId, message.conversationId);
 
   await prisma.reaction.delete({
     where: { userId_messageId_emoji: { userId, messageId, emoji } },
   }).catch(() => {
-    throw new NotFoundError("Réaction introuvable");
+    throw new NotFoundError("Reaction not found");
   });
 
   emitReactionRemove(message.conversationId, { userId, messageId, emoji });
@@ -52,7 +52,7 @@ export async function removeReaction(userId: string, messageId: string, emoji: s
 
 export async function getReactions(userId: string, messageId: string) {
   const message = await getMessageWithConversation(messageId);
-  if (!message) throw new NotFoundError("Message introuvable");
+  if (!message) throw new NotFoundError("Message not found");
 
   await assertMember(userId, message.conversationId);
 

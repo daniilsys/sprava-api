@@ -34,7 +34,7 @@ export async function sendMessage(userId: string, input: SendMessageInput) {
       },
     });
     if (count !== input.attachmentIds.length) {
-      throw new AppError(400, "Un ou plusieurs attachments sont invalides");
+      throw new AppError(400, "One or more attachments are invalid");
     }
 
     await prisma.attachment.updateMany({
@@ -49,7 +49,7 @@ export async function sendMessage(userId: string, input: SendMessageInput) {
       select: { conversationId: true },
     });
     if (!parent || parent.conversationId !== input.conversationId) {
-      throw new AppError(400, "Le message de réponse est introuvable dans cette conversation");
+      throw new AppError(400, "Reply message not found in this conversation");
     }
   }
 
@@ -99,9 +99,9 @@ async function getOwnMessage(userId: string, messageId: string) {
     where: { id: messageId },
     select: { senderId: true, conversationId: true, deletedAt: true },
   });
-  if (!message || message.deletedAt) throw new NotFoundError("Message introuvable");
+  if (!message || message.deletedAt) throw new NotFoundError("Message not found");
   if (message.senderId !== userId) {
-    throw new ForbiddenError("Vous ne pouvez agir que sur vos propres messages");
+    throw new ForbiddenError("You can only act on your own messages");
   }
   return message;
 }

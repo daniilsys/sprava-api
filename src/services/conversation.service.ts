@@ -20,7 +20,7 @@ export async function createConversation(
   if (!isGroup) {
     for (const memberId of input.memberIds) {
       if (await isBlocked(userId, memberId)) {
-        throw new ForbiddenError("Impossible de créer une conversation avec un utilisateur bloqué");
+        throw new ForbiddenError("Cannot create a conversation with a blocked user");
       }
     }
   }
@@ -82,10 +82,9 @@ export async function assertMember(userId: string, conversationId: string) {
     where: { userId_conversationId: { userId, conversationId } },
   });
   if (!member)
-    throw new ForbiddenError("Vous ne faites pas partie de cette conversation");
+    throw new ForbiddenError("You are not a member of this conversation");
 }
 
-/** Bloque l'envoi de messages dans un DM si un block existe */
 export async function assertNotBlockedInConversation(userId: string, conversationId: string) {
   const conversation = await prisma.conversation.findUnique({
     where: { id: conversationId },
@@ -95,7 +94,7 @@ export async function assertNotBlockedInConversation(userId: string, conversatio
 
   const otherMember = conversation.members.find((m) => m.userId !== userId);
   if (otherMember && (await isBlocked(userId, otherMember.userId))) {
-    throw new ForbiddenError("Impossible d'envoyer un message dans cette conversation");
+    throw new ForbiddenError("Cannot send a message in this conversation");
   }
 }
 
@@ -106,9 +105,9 @@ async function assertGroupOwner(userId: string, conversationId: string) {
     where: { id: conversationId },
     select: { isGroup: true, ownerId: true },
   });
-  if (!conversation) throw new NotFoundError("Conversation introuvable");
-  if (!conversation.isGroup) throw new AppError(400, "Cette action n'est disponible que pour les groupes");
-  if (conversation.ownerId !== userId) throw new ForbiddenError("Seul le propriétaire du groupe peut effectuer cette action");
+  if (!conversation) throw new NotFoundError("Conversation not found");
+  if (!conversation.isGroup) throw new AppError(400, "This action is only available for group conversations");
+  if (conversation.ownerId !== userId) throw new ForbiddenError("Only the group owner can perform this action");
 }
 
 export async function addMembers(userId: string, conversationId: string, input: AddMembersInput) {
@@ -118,12 +117,12 @@ export async function addMembers(userId: string, conversationId: string, input: 
     where: { id: conversationId },
     select: { isGroup: true, _count: { select: { members: true } } },
   });
-  if (!conversation) throw new NotFoundError("Conversation introuvable");
-  if (!conversation.isGroup) throw new AppError(400, "Impossible d'ajouter des membres à un DM");
+  if (!conversation) throw new NotFoundError("Conversation not found");
+  if (!conversation.isGroup) throw new AppError(400, "Cannot add members to a DM");
 
   const newCount = conversation._count.members + input.memberIds.length;
   if (newCount > MAX_GROUP_MEMBERS) {
-    throw new AppError(400, `Le groupe ne peut pas dépasser ${MAX_GROUP_MEMBERS} membres`);
+    throw new AppError(400, `Group cannot exceed ${MAX_GROUP_MEMBERS} members`);
   }
 
   const existing = await prisma.conversationMember.findMany({
@@ -154,12 +153,12 @@ export async function addMembers(userId: string, conversationId: string, input: 
 export async function removeMember(userId: string, conversationId: string, targetId: string) {
   await assertGroupOwner(userId, conversationId);
 
-  if (userId === targetId) throw new AppError(400, "Vous ne pouvez pas vous retirer vous-même");
+  if (userId === targetId) throw new AppError(400, "Cannot remove yourself");
 
   const member = await prisma.conversationMember.findUnique({
     where: { userId_conversationId: { userId: targetId, conversationId } },
   });
-  if (!member) throw new NotFoundError("Ce membre n'est pas dans le groupe");
+  if (!member) throw new NotFoundError("Member not found in this group");
 
   await prisma.conversationMember.delete({
     where: { userId_conversationId: { userId: targetId, conversationId } },
@@ -174,12 +173,12 @@ export async function removeMember(userId: string, conversationId: string, targe
 export async function transferOwnership(userId: string, conversationId: string, newOwnerId: string) {
   await assertGroupOwner(userId, conversationId);
 
-  if (userId === newOwnerId) throw new AppError(400, "Vous êtes déjà le propriétaire");
+  if (userId === newOwnerId) throw new AppError(400, "You are already the owner");
 
   const member = await prisma.conversationMember.findUnique({
     where: { userId_conversationId: { userId: newOwnerId, conversationId } },
   });
-  if (!member) throw new NotFoundError("Ce membre n'est pas dans le groupe");
+  if (!member) throw new NotFoundError("Member not found in this group");
 
   await prisma.conversation.update({
     where: { id: conversationId },
@@ -199,8 +198,8 @@ export async function leaveConversation(userId: string, conversationId: string) 
     where: { id: conversationId },
     select: { isGroup: true, ownerId: true },
   });
-  if (!conversation) throw new NotFoundError("Conversation introuvable");
-  if (!conversation.isGroup) throw new AppError(400, "Impossible de quitter un DM");
+  if (!conversation) throw new NotFoundError("Conversation not found");
+  if (!conversation.isGroup) throw new AppError(400, "Cannot leave a DM");
 
   await prisma.conversationMember.delete({
     where: { userId_conversationId: { userId, conversationId } },
@@ -245,6 +244,6 @@ export async function getConversationById(conversationId: string) {
       },
     },
   });
-  if (!conversation) throw new NotFoundError("Conversation introuvable");
+  if (!conversation) throw new NotFoundError("Conversation not found");
   return toConversation(conversation);
 }

@@ -18,7 +18,7 @@ router.use(authenticate);
 router.use(userRateLimit);
 
 function requireFile(req: Request): Express.Multer.File {
-  if (!req.file) throw new AppError(400, "Aucun fichier fourni");
+  if (!req.file) throw new AppError(400, "No file provided");
   return req.file;
 }
 
@@ -30,7 +30,7 @@ router.put(
       where: { id: req.userId! },
       select: { avatarUrl: true },
     });
-    if (!current) throw new NotFoundError("Utilisateur introuvable");
+    if (!current) throw new NotFoundError("User not found");
 
     const file = requireFile(req);
     const url = await uploadService.uploadFile("avatars", file);
@@ -65,16 +65,16 @@ router.put(
       where: { id: conversationId },
       select: { iconUrl: true, isGroup: true, ownerId: true },
     });
-    if (!current) throw new NotFoundError("Conversation introuvable");
+    if (!current) throw new NotFoundError("Conversation not found");
     if (!current.isGroup)
       throw new AppError(
         400,
-        "Seules les conversations de groupe peuvent avoir une icône",
+        "Only group conversations can have an icon",
       );
     if (current.ownerId !== req.userId)
       throw new AppError(
         403,
-        "Seul le propriétaire du groupe peut changer l'icône",
+        "Only the group owner can change the icon",
       );
 
     const file = requireFile(req);

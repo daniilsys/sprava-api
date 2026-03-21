@@ -10,13 +10,13 @@ export function errorHandler(err: Error, _req: Request, res: Response, _next: Ne
 
   if (err instanceof multer.MulterError) {
     const messages: Record<string, string> = {
-      LIMIT_FILE_SIZE: "Le fichier dépasse la taille maximale autorisée",
-      LIMIT_UNEXPECTED_FILE: "Champ de fichier inattendu",
+      LIMIT_FILE_SIZE: "File exceeds maximum allowed size",
+      LIMIT_UNEXPECTED_FILE: "Unexpected file field",
     };
-    res.status(400).json({ error: messages[err.code] ?? "Erreur lors de l'upload du fichier" });
+    res.status(400).json({ error: messages[err.code] ?? "File upload error" });
     return;
   }
 
   console.error(err);
-  res.status(500).json({ error: "Erreur interne du serveur" });
+  res.status(500).json({ error: "Internal server error" });
 }

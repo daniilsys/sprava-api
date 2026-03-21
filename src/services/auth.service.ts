@@ -20,7 +20,7 @@ export async function register(input: RegisterInput) {
     where: { OR: [{ email: input.email }, { username: input.username }] },
   });
   if (exists) {
-    throw new ConflictError("Email ou nom d'utilisateur déjà pris");
+    throw new ConflictError("Email or username already taken");
   }
 
   const user = await prisma.user.create({
@@ -54,7 +54,7 @@ export async function register(input: RegisterInput) {
 export async function login(input: LoginInput) {
   const user = await prisma.user.findUnique({ where: { email: input.email } });
   if (!user || !(await comparePassword(input.password, user.password))) {
-    throw new UnauthorizedError("Identifiants invalides");
+    throw new UnauthorizedError("Invalid credentials");
   }
 
   const accessToken = signAccessToken({ userId: user.id });
@@ -84,7 +84,7 @@ export async function refresh(token: string) {
     where: { token: hash },
   });
   if (!stored || stored.expiresAt < new Date()) {
-    throw new UnauthorizedError("Refresh token invalide ou expiré");
+    throw new UnauthorizedError("Invalid or expired refresh token");
   }
 
   await prisma.refreshToken.delete({ where: { id: stored.id } });

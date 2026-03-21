@@ -17,7 +17,7 @@ function fileFilter(allowedTypes: string[]) {
     if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new AppError(400, "Type de fichier non autorisé"));
+      cb(new AppError(400, "Unsupported file type"));
     }
   };
 }

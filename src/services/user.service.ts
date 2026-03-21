@@ -10,7 +10,7 @@ export async function getUserById(id: string) {
     where: { id },
     select: { id: true, username: true, email: true, avatarUrl: true, createdAt: true },
   });
-  if (!user) throw new NotFoundError("Utilisateur introuvable");
+  if (!user) throw new NotFoundError("User not found");
   return toSelfUser(user);
 }
 

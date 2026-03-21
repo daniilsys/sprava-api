@@ -13,7 +13,7 @@ declare global {
 export function authenticate(req: Request, _res: Response, next: NextFunction) {
   const header = req.headers.authorization;
   if (!header?.startsWith("Bearer ")) {
-    throw new UnauthorizedError("Token manquant");
+    throw new UnauthorizedError("Missing token");
   }
 
   try {
@@ -21,6 +21,6 @@ export function authenticate(req: Request, _res: Response, next: NextFunction) {
     req.userId = payload.userId;
     next();
   } catch {
-    throw new UnauthorizedError("Token invalide ou expiré");
+    throw new UnauthorizedError("Invalid or expired token");
   }
 }

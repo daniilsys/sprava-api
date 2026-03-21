@@ -28,7 +28,7 @@ function rateLimit({ windowMs, max, keyPrefix, keyFn }: RateLimitOptions) {
     if (current > max) {
       const ttl = await redis.ttl(key);
       res.setHeader("Retry-After", Math.max(ttl, 1));
-      res.status(429).json({ error: "Trop de requêtes, réessayez plus tard" });
+      res.status(429).json({ error: "Too many requests, please try again later" });
       return;
     }
 

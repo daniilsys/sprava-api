@@ -18,7 +18,7 @@ export async function assertNotBlocked(userId: string, targetId: string) {
       ],
     },
   });
-  if (block) throw new ForbiddenError("Action impossible avec cet utilisateur");
+  if (block) throw new ForbiddenError("Action blocked between these users");
 }
 
 export async function isBlocked(userA: string, userB: string): Promise<boolean> {
@@ -43,13 +43,13 @@ export async function getBlockedIds(userId: string): Promise<string[]> {
 
 export async function sendFriendRequest(senderId: string, receiverId: string) {
   if (senderId === receiverId) {
-    throw new AppError(400, "Vous ne pouvez pas vous ajouter vous-même");
+    throw new AppError(400, "Cannot send a friend request to yourself");
   }
 
   await assertNotBlocked(senderId, receiverId);
 
   const receiver = await prisma.user.findUnique({ where: { id: receiverId } });
-  if (!receiver) throw new NotFoundError("Utilisateur introuvable");
+  if (!receiver) throw new NotFoundError("User not found");
 
   const existing = await prisma.friendRequest.findFirst({
     where: {
@@ -62,12 +62,12 @@ export async function sendFriendRequest(senderId: string, receiverId: string) {
 
   if (existing) {
     if (existing.status === "ACCEPTED") {
-      throw new ConflictError("Vous êtes déjà amis");
+      throw new ConflictError("Already friends");
     }
     if (existing.senderId === receiverId) {
       return acceptFriendRequest(senderId, existing.id);
     }
-    throw new ConflictError("Demande d'ami déjà envoyée");
+    throw new ConflictError("Friend request already sent");
   }
 
   const request = await prisma.friendRequest.create({
@@ -85,12 +85,12 @@ export async function acceptFriendRequest(userId: string, requestId: string) {
     where: { id: requestId },
     include: friendRequestInclude,
   });
-  if (!request) throw new NotFoundError("Demande introuvable");
+  if (!request) throw new NotFoundError("Friend request not found");
   if (request.receiverId !== userId) {
-    throw new ForbiddenError("Vous ne pouvez accepter que les demandes qui vous sont adressées");
+    throw new ForbiddenError("Only the receiver can accept this request");
   }
   if (request.status !== "PENDING") {
-    throw new AppError(400, "Cette demande n'est plus en attente");
+    throw new AppError(400, "This request is no longer pending");
   }
 
   const updated = await prisma.friendRequest.update({
@@ -110,12 +110,12 @@ export async function declineFriendRequest(userId: string, requestId: string) {
     where: { id: requestId },
     include: friendRequestInclude,
   });
-  if (!request) throw new NotFoundError("Demande introuvable");
+  if (!request) throw new NotFoundError("Friend request not found");
   if (request.receiverId !== userId) {
-    throw new ForbiddenError("Vous ne pouvez décliner que les demandes qui vous sont adressées");
+    throw new ForbiddenError("Only the receiver can decline this request");
   }
   if (request.status !== "PENDING") {
-    throw new AppError(400, "Cette demande n'est plus en attente");
+    throw new AppError(400, "This request is no longer pending");
   }
 
   await prisma.friendRequest.delete({ where: { id: requestId } });
@@ -123,12 +123,12 @@ export async function declineFriendRequest(userId: string, requestId: string) {
 
 export async function cancelFriendRequest(userId: string, requestId: string) {
   const request = await prisma.friendRequest.findUnique({ where: { id: requestId } });
-  if (!request) throw new NotFoundError("Demande introuvable");
+  if (!request) throw new NotFoundError("Friend request not found");
   if (request.senderId !== userId) {
-    throw new ForbiddenError("Vous ne pouvez annuler que vos propres demandes");
+    throw new ForbiddenError("Only the sender can cancel this request");
   }
   if (request.status !== "PENDING") {
-    throw new AppError(400, "Cette demande n'est plus en attente");
+    throw new AppError(400, "This request is no longer pending");
   }
 
   await prisma.friendRequest.delete({ where: { id: requestId } });
@@ -173,7 +173,7 @@ export async function removeFriend(userId: string, friendId: string) {
       ],
     },
   });
-  if (!request) throw new NotFoundError("Ami introuvable");
+  if (!request) throw new NotFoundError("Friend not found");
 
   await prisma.friendRequest.delete({ where: { id: request.id } });
   emitFriendRemove(friendId, userId);
@@ -181,16 +181,16 @@ export async function removeFriend(userId: string, friendId: string) {
 
 export async function blockUser(blockerId: string, blockedId: string) {
   if (blockerId === blockedId) {
-    throw new AppError(400, "Vous ne pouvez pas vous bloquer vous-même");
+    throw new AppError(400, "Cannot block yourself");
   }
 
   const target = await prisma.user.findUnique({ where: { id: blockedId } });
-  if (!target) throw new NotFoundError("Utilisateur introuvable");
+  if (!target) throw new NotFoundError("User not found");
 
   const existing = await prisma.block.findUnique({
     where: { blockerId_blockedId: { blockerId, blockedId } },
   });
-  if (existing) throw new ConflictError("Utilisateur déjà bloqué");
+  if (existing) throw new ConflictError("User already blocked");
 
   await prisma.friendRequest.deleteMany({
     where: {
@@ -208,7 +208,7 @@ export async function unblockUser(blockerId: string, blockedId: string) {
   const existing = await prisma.block.findUnique({
     where: { blockerId_blockedId: { blockerId, blockedId } },
   });
-  if (!existing) throw new NotFoundError("Cet utilisateur n'est pas bloqué");
+  if (!existing) throw new NotFoundError("User is not blocked");
 
   await prisma.block.delete({
     where: { blockerId_blockedId: { blockerId, blockedId } },

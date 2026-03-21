@@ -9,28 +9,28 @@ export class AppError extends Error {
 }
 
 export class UnauthorizedError extends AppError {
-  constructor(message = "Non autorisé") {
+  constructor(message = "Unauthorized") {
     super(401, message);
     this.name = "UnauthorizedError";
   }
 }
 
 export class ForbiddenError extends AppError {
-  constructor(message = "Accès refusé") {
+  constructor(message = "Forbidden") {
     super(403, message);
     this.name = "ForbiddenError";
   }
 }
 
 export class NotFoundError extends AppError {
-  constructor(message = "Ressource introuvable") {
+  constructor(message = "Not found") {
     super(404, message);
     this.name = "NotFoundError";
   }
 }
 
 export class ConflictError extends AppError {
-  constructor(message = "Conflit") {
+  constructor(message = "Conflict") {
     super(409, message);
     this.name = "ConflictError";
   }

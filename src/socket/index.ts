@@ -12,14 +12,14 @@ export function initSocket(httpServer: HttpServer): Server {
 
   io.use(async (socket, next) => {
     const token = socket.handshake.auth.token as string | undefined;
-    if (!token) return next(new Error("Token manquant"));
+    if (!token) return next(new Error("Missing token"));
 
     try {
       const payload = verifyAccessToken(token);
       socket.data.userId = payload.userId;
       next();
     } catch {
-      next(new Error("Token invalide"));
+      next(new Error("Invalid token"));
     }
   });
 

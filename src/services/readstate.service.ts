@@ -11,7 +11,7 @@ export async function markAsRead(userId: string, conversationId: string, message
     select: { conversationId: true },
   });
   if (!message || message.conversationId !== conversationId) {
-    throw new NotFoundError("Message introuvable dans cette conversation");
+    throw new NotFoundError("Message not found in this conversation");
   }
 
   const current = await prisma.readState.findUnique({
