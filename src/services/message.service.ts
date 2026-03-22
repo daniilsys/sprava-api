@@ -4,7 +4,7 @@ import type {
   SendMessageInput,
   GetMessagesQuery,
 } from "../schemas/message.schema.js";
-import { generateSnowflake } from "@/utils/snowflake.js";
+import { generateSnowflake } from "../utils/snowflake.js";
 import { toMessage } from "../mappers/message.mapper.js";
 import { AppError } from "../utils/errors.js";
 import { emitNewMessage, emitMessageUpdate, emitMessageDelete } from "../socket/emitters.js";

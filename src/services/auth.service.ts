@@ -7,7 +7,7 @@ import {
   verifyRefreshToken,
 } from "../utils/jwt.js";
 import { ConflictError, UnauthorizedError } from "../utils/errors.js";
-import { generateSnowflake } from "@/utils/snowflake.js";
+import { generateSnowflake } from "../utils/snowflake.js";
 import type { RegisterInput, LoginInput } from "../schemas/auth.schema.js";
 import { toSelfUser } from "../mappers/user.mapper.js";
 

@@ -2,7 +2,7 @@ import { prisma } from "../config/db.js";
 import { ForbiddenError, NotFoundError } from "../utils/errors.js";
 import type { CreateConversationInput, AddMembersInput } from "../schemas/conversation.schema.js";
 import { AppError } from "../utils/errors.js";
-import { generateSnowflake } from "@/utils/snowflake.js";
+import { generateSnowflake } from "../utils/snowflake.js";
 import {
   toConversation,
   toConversationWithLastMessage,

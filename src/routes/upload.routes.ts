@@ -9,7 +9,7 @@ import * as conversationService from "../services/conversation.service.js";
 import { prisma } from "../config/db.js";
 import { NotFoundError } from "../utils/errors.js";
 import { toSelfUser } from "../mappers/user.mapper.js";
-import { generateSnowflake } from "@/utils/snowflake.js";
+import { generateSnowflake } from "../utils/snowflake.js";
 import { toAttachment } from "../mappers/attachment.mapper.js";
 
 const router: RouterType = Router();

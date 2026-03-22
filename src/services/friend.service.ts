@@ -1,5 +1,5 @@
 import { prisma } from "../config/db.js";
-import { generateSnowflake } from "@/utils/snowflake.js";
+import { generateSnowflake } from "../utils/snowflake.js";
 import { AppError, ConflictError, ForbiddenError, NotFoundError } from "../utils/errors.js";
 import { toFriendRequest, toFriend } from "../mappers/friend.mapper.js";
 import { emitFriendRequest, emitFriendRequestUpdate, emitFriendRemove } from "../socket/emitters.js";
