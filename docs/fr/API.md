@@ -386,12 +386,15 @@ Les `attachmentIds` référencent des fichiers uploadés via `POST /upload/attac
   "attachments": [
     {
       "id": "777888999",
+      "type": "FILE",
       "url": "https://cdn.sprava.top/attachments/uuid.png",
       "filename": "photo.png",
       "mimeType": "image/png",
       "size": 102400,
+      "duration": null,
+      "waveform": null,
       "messageId": "444555666",
-      "createdAt": "..."
+      "createdAt": "2026-03-20T10:00:00.000Z"
     }
   ],
   "reactions": [],
@@ -566,24 +569,58 @@ Upload l'icône d'une conversation. L'utilisateur doit être membre.
 
 ### `POST /upload/attachments`
 
-Upload un fichier à lier ultérieurement à un message via `attachmentIds`. Les fichiers non liés après 1 heure sont automatiquement supprimés (fichier R2 + row DB).
+Upload un fichier ou un message vocal à lier ultérieurement à un message via `attachmentIds`. Les fichiers non liés après 1 heure sont automatiquement supprimés (fichier R2 + row DB).
 
 | Contrainte | Valeur |
 |------------|--------|
 | Taille max | 25 MB |
 | Types | image/jpeg, image/png, image/gif, image/webp, application/pdf, text/plain, audio/mpeg, audio/ogg, video/mp4, video/webm |
 
-**Réponse:** `201`
+**Body (multipart/form-data):**
+
+| Champ | Type | Requis | Description |
+|-------|------|--------|-------------|
+| `file` | file | oui | Le fichier |
+| `type` | string | non | `FILE` (defaut) ou `VOICE` |
+| `duration` | number | VOICE only | Duree en secondes |
+| `waveform` | string | non | Amplitudes encodees en base64 |
+
+Pour `type: VOICE` :
+- `duration` est obligatoire
+- Le fichier doit etre de type `audio/*`
+- Le fichier est stocke dans le dossier `voice/` sur R2
+
+**Reponse fichier:** `201`
 
 ```json
 {
   "id": "777888999",
+  "type": "FILE",
   "url": "https://cdn.sprava.top/attachments/uuid.png",
   "filename": "document.pdf",
   "mimeType": "application/pdf",
   "size": 204800,
+  "duration": null,
+  "waveform": null,
   "messageId": null,
-  "createdAt": "..."
+  "createdAt": "2026-03-20T10:00:00.000Z"
+}
+```
+
+**Reponse message vocal:** `201`
+
+```json
+{
+  "id": "888999000",
+  "type": "VOICE",
+  "url": "https://cdn.sprava.top/voice/uuid.ogg",
+  "filename": "voice.ogg",
+  "mimeType": "audio/ogg",
+  "size": 48000,
+  "duration": 4.2,
+  "waveform": "AQIDBAUGBwgJCgsMDQ4P...",
+  "messageId": null,
+  "createdAt": "2026-03-20T10:00:00.000Z"
 }
 ```
 

@@ -100,15 +100,23 @@ model Reaction {
   @@index([messageId])
 }
 
+enum AttachmentType {
+  FILE
+  VOICE
+}
+
 model Attachment {
-  id         String   @id
+  id         String         @id
+  type       AttachmentType @default(FILE)
   url        String
   filename   String
   mimeType   String
   size       Int
+  duration   Float?
+  waveform   String?
   messageId  String?
   uploaderId String
-  createdAt  DateTime @default(now())
+  createdAt  DateTime       @default(now())
 
   message Message? @relation(fields: [messageId], references: [id], onDelete: Cascade)
   uploader User    @relation(fields: [uploaderId], references: [id], onDelete: Cascade)

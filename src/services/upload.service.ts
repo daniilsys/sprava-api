@@ -1,19 +1,18 @@
-import crypto from "node:crypto";
 import path from "node:path";
 import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { s3, R2_BUCKET, R2_PUBLIC_URL } from "../config/s3.js";
 
-function objectKey(folder: string, originalName: string): string {
+function objectKey(folder: string, id: string, originalName: string): string {
   const ext = path.extname(originalName) || ".bin";
-  const id = crypto.randomUUID();
   return `${folder}/${id}${ext}`;
 }
 
 export async function uploadFile(
   folder: string,
+  id: string,
   file: Express.Multer.File,
 ): Promise<string> {
-  const key = objectKey(folder, file.originalname);
+  const key = objectKey(folder, id, file.originalname);
 
   await s3.send(
     new PutObjectCommand({

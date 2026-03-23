@@ -14,7 +14,7 @@ const socket = io("http://localhost:3000", {
 });
 ```
 
-Le token est vérifié à la connexion. Si le token est invalide ou manquant, la connexion est refusée avec une erreur `Token manquant` ou `Token invalide`.
+Le token est vérifié à la connexion. Si le token est invalide ou manquant, la connexion est refusée avec une erreur `Missing token` ou `Invalid token`.
 
 ## Rooms
 

@@ -33,7 +33,7 @@ router.put(
     if (!current) throw new NotFoundError("User not found");
 
     const file = requireFile(req);
-    const url = await uploadService.uploadFile("avatars", file);
+    const url = await uploadService.uploadFile("avatars", req.userId!, file);
 
     if (current.avatarUrl) {
       await uploadService.deleteFile(current.avatarUrl);
@@ -78,7 +78,7 @@ router.put(
       );
 
     const file = requireFile(req);
-    const url = await uploadService.uploadFile("icons", file);
+    const url = await uploadService.uploadFile("icons", conversationId, file);
 
     if (current.iconUrl) {
       await uploadService.deleteFile(current.iconUrl);
@@ -107,15 +107,40 @@ router.post(
   uploadAttachment.single("file"),
   async (req: Request, res: Response) => {
     const file = requireFile(req);
-    const url = await uploadService.uploadFile("attachments", file);
+    const type = req.body.type === "VOICE" ? "VOICE" as const : "FILE" as const;
+
+    if (type === "VOICE") {
+      if (!file.mimetype.startsWith("audio/")) {
+        throw new AppError(400, "Voice messages must be audio files");
+      }
+      if (!req.body.duration) {
+        throw new AppError(400, "Duration is required for voice messages");
+      }
+    }
+
+    const duration = req.body.duration ? parseFloat(req.body.duration) : null;
+    const waveform = req.body.waveform ?? null;
+
+    if (duration !== null && (isNaN(duration) || duration <= 0)) {
+      throw new AppError(400, "Invalid duration");
+    }
+    if (waveform !== null && typeof waveform !== "string") {
+      throw new AppError(400, "Invalid waveform");
+    }
+
+    const id = generateSnowflake();
+    const url = await uploadService.uploadFile(type === "VOICE" ? "voice" : "attachments", id, file);
 
     const attachment = await prisma.attachment.create({
       data: {
-        id: generateSnowflake(),
+        id,
+        type,
         url,
         filename: file.originalname,
         mimeType: file.mimetype,
         size: file.size,
+        duration,
+        waveform,
         uploaderId: req.userId!,
       },
     });
